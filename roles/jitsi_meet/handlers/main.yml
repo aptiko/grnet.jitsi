@@ -1,0 +1,6 @@
+---
+
+- name: Restart jicofo
+  service:
+    name: jicofo
+    state: restarted

@@ -1,0 +1,87 @@
+---
+- name: Gather videobridge facts
+  setup:
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['jitsi_videobridge'] }}"
+
+- name: Add Jitsi packaging GPG key
+  apt_key:
+    url: https://download.jitsi.org/jitsi-key.gpg.key
+
+- name: Add Jitsi apt repository
+  apt_repository:
+    repo: deb https://download.jitsi.org stable/
+
+- name: Add Prosody packaging GPG key
+  apt_key:
+    url: https://prosody.im/files/prosody-debian-packages.key
+
+- name: Add Prosody apt repository
+  apt_repository:
+    repo: deb http://packages.prosody.im/debian {{ ansible_distribution_release }} main
+
+- include_tasks: preconfigure.yml
+
+- name: Set variables for Ubuntu 20.04
+  set_fact:
+    prosody_version: "0.11"
+  when: ansible_distribution_release == "focal"
+
+- name: Set variables for Ubuntu 22.04
+  set_fact:
+    prosody_version: "0.12"
+  when: ansible_distribution_release == "jammy"
+
+- name: Install apt packages required for Jitsi
+  apt:
+    name:
+      - openjdk-8-jre-headless
+      - lua5.1
+      - jitsi-meet
+      - prosody-{{ prosody_version }}
+    autoremove: true
+  register: apt_install_result
+  ignore_errors: true
+
+# The jitsi debian packages are suboptimal. At least in Ubuntu 20.04, it
+# is common, when installing on a clean machine, for apt to fail, but
+# then running it a second time succeeds, so this is what we do. Other
+# shortcomings are that they need preconfiguring with debconf, otherwise
+# again apt fails, and that videobridge is a necessary dependency of
+# jitsi-meet (when conceivably one might want to keep all videobridges
+# on separate machines). It would be best to refrain from using debian
+# packages and install from source instead, but we aren't ready for that
+# yet.
+
+- name: Try a second time if there was an error installing apt packages
+  command: "apt-get -f -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install"
+  when: apt_install_result.failed
+
+- name: Create prosody user for the videobridges
+  shell:
+    cmd: prosodyctl register {{ videobridge_user }} auth.{{ ansible_fqdn }} {{ videobridge_password }}
+    creates: /var/lib/prosody/auth%2e{{ ansible_fqdn | replace(".","%2e") | replace("-","%2d") }}/accounts/{{ videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
+
+- name: Allow prosody through firewall
+  lineinfile:
+    path: /etc/ferm/ansible-late
+    line: "proto tcp saddr {{ hostvars[item]['ansible_default_ipv4']['address'] }} dport 5222 ACCEPT;"
+  notify: Reload ferm
+  loop: "{{ groups['jitsi_videobridge'] }}"
+
+- name: Configure jitsi-meet
+  template:
+    src: jitsi-meet-config.js
+    dest: /etc/jitsi/meet/{{ ansible_fqdn }}-config.js
+- name: Configure nginx for jitsi-meet
+  template:
+    src: jitsi-meet.nginx.conf
+    dest: /etc/nginx/snippets/{{ ansible_fqdn }}/jitsi-meet.conf
+  notify: Reload nginx
+
+- name: Configure jicofo
+  template:
+    src: jicofo.conf
+    dest: /etc/jitsi/jicofo/jicofo.conf
+  notify: Restart jicofo

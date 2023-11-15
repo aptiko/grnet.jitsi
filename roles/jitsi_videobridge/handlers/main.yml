@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  systemd:
+    daemon_reexec: yes
+
+- name: Restart jitsi-videobridge2
+  service:
+    name: jitsi-videobridge2
+    state: restarted
+
