@@ -22,14 +22,19 @@ server::
     [jitsi_videobridge]
     my-jitsi-meet-server
 
+    [jibri]
+    my-jibri-server
+
 The ``jitsi_meet`` group must contain only one server. That server must
 also be listed in the ``jitsi_videobridge`` group ; that is, the Jitsi
 Meet server must also be a videobridge (this is a limitation of the
 Jitsi Debian packages, where ``jitsi-videobridge`` is a dependency of
-``jitsi-meet``). Additional videobridges can be added if desired.  The
+``jitsi-meet``). Additional videobridges can be added if desired.
+Finally, the ``jibri`` group can contain one or more servers. The
 playbook (see below) will assign the ``jitsi_meet`` role to the server
-in the ``jitsi_meet`` group and the ``jitsi_videobridge`` role to the
-servers in the ``jitsi_videobridge`` group.
+in the ``jitsi_meet`` group, the ``jitsi_videobridge`` role to the
+servers in the ``jitsi_videobridge`` group, and the ``jibri`` role to
+the servers in the ``jibri`` group. ``jibri`` is optional.
 
 Although in principle nginx, jitsi-meet, prosody and jicofo could reside
 in different machines, the role ``jitsi_meet`` puts them all in a single
@@ -40,13 +45,19 @@ Variables
 
 You need to make certain that some variables are available to the
 roles, e.g. by putting them in ``group_vars/all``. Obviously it's a good
-idea to vault the passwords/secrets. Here is an example::
+idea to vault the passwords/secrets. Here is an example (the
+jibri/recorder stuff is necessary only when using jibri)::
 
+    jitsi_fqdn: jitsi.example.com
+    jibri_fqdn: jibri.example.com
     jicofo_password: topsecret1
     jicofo_secret: topsecret2
+    prosody_external_service_secret: topsecret4
     videobridge_user: myvideobridgeuser
     videobridge_password: topsecret3
     videobridge_muc_nickname: myvideobridge_muc_nick
+    jibri_password: topsecret4
+    recorder_password: topsecret5
 
 Playbook
 ========
@@ -55,14 +66,20 @@ Use a playbook similar to this::
 
     ---
     - name: Jitsi server
-    hosts: jitsi_meet
-    roles:
+      hosts: jitsi_meet
+      roles:
+        - aptiko.general.nginx
         - grnet.jitsi.jitsi_meet
 
     - name: Jitsi videobridge
-    hosts: jitsi_videobridge
-    roles:
+      hosts: jitsi_videobridge
+      roles:
         - grnet.jitsi.jitsi_videobridge
+
+    - name: Jibri
+      hosts: jibri
+      roles:
+        - grnet.jitsi.jibri
 
 Jitsi architecture
 ==================
@@ -107,6 +124,12 @@ ports 5222 (XMPP client), 5269 (XMPP server), and 5280 (XMPP BOSH). Most
 components, such as Jicofo and videobridges, connect to 5222. Nginx
 also proxies ``/http-bind`` and ``/xmpp-websocket`` to prosody's 5280.
 
+**Jibri** is the Jitsi recording component, that records conferences. It
+works by starting a headless chrome browser that joins the conference as
+an invisible user. It is quite heavy, because of the browser and the
+video encoding, and must run on a separate server. Each Jibri server can
+be recording only one conference at any time.
+
 For additional information on Jitsi, see:
 
 - the `Architecture section in the Jitsi documentation`_.
@@ -126,6 +149,9 @@ For additional information on Jitsi, see:
 Variables and options
 =====================
 
+- ``jitsi_fqdn``: The domain where jitsi meet is listening.
+- ``jibri_fqdn``: The domain name of the jibri server (used for
+  downloading recordings).
 - ``jicofo_password``, ``jicofo_secret``: The Jicofo username is set as
   "focus", and the password is set to the value of ``jicofo_password``.
   It's not actually used anywhere (but has to be set). Likewise with the

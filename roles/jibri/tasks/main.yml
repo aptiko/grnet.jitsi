@@ -1,0 +1,108 @@
+---
+
+- name: Add apt key for Google Chrome repository
+  apt_key:
+    url: https://dl-ssl.google.com/linux/linux_signing_key.pub
+    keyring: /usr/share/keyrings/google-chrome-keyring.gpg
+
+- name: Add apt Google Chrome repository
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main"
+    filename: google-chrome
+
+- name: Add apt key for Jitsi repository
+  apt_key:
+    url: https://download.jitsi.org/jitsi-key.gpg.key
+    keyring: /usr/share/keyrings/jitsi-keyring.gpg
+
+- name: Add apt Jitsi repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/jitsi-keyring.gpg] https://download.jitsi.org stable/"
+    filename: jitsi
+
+- name: Install packages required for jibri
+  apt:
+    name:
+      - linux-modules-extra-{{ ansible_kernel }}
+      - linux-image-extra-virtual
+      - ffmpeg
+      - unzip
+      - default-jre-headless
+      - alsa-utils
+      - jq
+      - icewm
+      - xdotool
+      - xserver-xorg-video-dummy
+      - ruby-hocon
+      - google-chrome-stable
+      - jibri
+
+- name: Ensure snd_aloop is loaded
+  community.general.modprobe:
+    name: snd_aloop
+    persistent: present
+
+- name: Create Chrome managed policies configuration directory
+  file:
+    path: /etc/opt/chrome/policies/managed
+    state: directory
+
+- name: Hide Chrome warnings
+  copy:
+    dest: /etc/opt/chrome/policies/managed/managed_policies.json
+    content: '{ "CommandLineFlagSecurityWarningsEnabled": false }'
+
+- name: Get Chrome version
+  shell: google-chrome --version|awk '{ print $3 }'
+  register: get_chrome_version
+  check_mode: no
+  changed_when: false
+
+- name: Download Chrome driver
+  unarchive:
+    src: https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{{ get_chrome_version.stdout }}/linux64/chromedriver-linux64.zip
+    remote_src: yes
+    dest: /var/tmp
+    mode: 0755
+    creates: /var/tmp/chromedriver-linux64/chromedriver
+
+- name: Copy Chrome driver to /usr/local/bin
+  copy:
+    src: /var/tmp/chromedriver-linux64/chromedriver
+    dest: /usr/local/bin/chromedriver
+    mode: 0755
+    remote_src: yes
+
+- name: Create Jibri configuration directory
+  file:
+    dest: /etc/jitsi/jibri
+    state: directory
+
+- debug:
+    msg: "{{ hostvars[groups['jitsi_meet'][0]]['ansible_host'] }}"
+
+- name: Configure Jibri
+  template:
+    src: jibri.conf
+    dest: /etc/jitsi/jibri/jibri.conf
+  notify:
+    - Restart Jibri
+
+- name: Copy Jibri finalization script
+  copy:
+    src: finalize-jibri
+    dest: /usr/local/bin/finalize-jibri
+    mode: 0755
+
+- name: Configure nginx
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/snippets/{{ jibri_fqdn }}/jibri.conf
+  notify:
+    - Reload nginx
+
+- name: Create directory /var/www/jibri/recordings
+  file:
+    path: /var/www/jibri/recordings
+    state: directory
+    owner: jibri

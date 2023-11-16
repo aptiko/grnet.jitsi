@@ -1,9 +1,9 @@
 ---
-- name: Gather videobridge facts
+- name: Gather videobridge and jibri facts
   setup:
   delegate_to: "{{ item }}"
   delegate_facts: true
-  loop: "{{ groups['jitsi_videobridge'] }}"
+  loop: "{{ groups['jitsi_videobridge'] | union(groups['jibri'])}}"
 
 - name: Add Jitsi packaging GPG key
   apt_key:
@@ -58,26 +58,69 @@
   command: "apt-get -f -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install"
   when: apt_install_result.failed
 
-- name: Create prosody user for the videobridges
-  shell:
-    cmd: prosodyctl register {{ videobridge_user }} auth.{{ ansible_fqdn }} {{ videobridge_password }}
-    creates: /var/lib/prosody/auth%2e{{ ansible_fqdn | replace(".","%2e") | replace("-","%2d") }}/accounts/{{ videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
+- name: Remove automatically created prosody configuration file
+  file:
+    dest: /etc/prosody/conf.d/{{ ansible_fqdn }}.cfg.lua
+    state: absent
 
-- name: Allow prosody through firewall
+- include_tasks: create_certificates.yml
+
+- name: Add prosody configuration for Jitsi
+  template:
+    src: prosody-jitsi.cfg.lua
+    dest: /etc/prosody/conf.avail/jitsi.cfg.lua
+
+- name: Enable prosody configuration for Jitsi
+  file:
+    state: link
+    src: /etc/prosody/conf.avail/jitsi.cfg.lua
+    dest: /etc/prosody/conf.d/jitsi.cfg.lua
+  notify:
+    - Restart prosody
+
+# This should have been created by the debconf preconfiguration, but the
+# latter actually creates focus@auth.[ansible_fqdn], whereas we want
+# focus@auth.meet.jitsi.
+- name: Create prosody user for Jicofo
+  command:
+    cmd: prosodyctl register focus auth.meet.jitsi {{ jicofo_password }}
+    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/focus.dat
+
+- name: Subscribe focus.meet.jitsi to prosody
+  command:
+    cmd: prosodyctl mod_roster_command subscribe focus.meet.jitsi focus@auth.meet.jitsi
+    creates: /var/lib/prosody/auth%2emeet%2ejitsi/roster/focus.dat
+
+- name: Create prosody user for the videobridges
+  command:
+    cmd: prosodyctl register {{ videobridge_user }} auth.meet.jitsi {{ videobridge_password }}
+    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/{{ videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
+
+- name: Allow videobridges and jibri to access prosody through firewall
   lineinfile:
     path: /etc/ferm/ansible-late
     line: "proto tcp saddr {{ hostvars[item]['ansible_default_ipv4']['address'] }} dport 5222 ACCEPT;"
   notify: Reload ferm
-  loop: "{{ groups['jitsi_videobridge'] }}"
+  loop: "{{ groups['jitsi_videobridge'] | union(groups['jibri']) }}"
 
 - name: Configure jitsi-meet
   template:
     src: jitsi-meet-config.js
-    dest: /etc/jitsi/meet/{{ ansible_fqdn }}-config.js
+    dest: /etc/jitsi/meet/{{ jitsi_fqdn }}-config.js
+
 - name: Configure nginx for jitsi-meet
   template:
     src: jitsi-meet.nginx.conf
-    dest: /etc/nginx/snippets/{{ ansible_fqdn }}/jitsi-meet.conf
+    dest: /etc/nginx/snippets/{{ jitsi_fqdn }}/jitsi-meet.conf
+  notify: Reload nginx
+
+- name: Add application/wasm to mime.types
+  lineinfile:
+    path: /etc/nginx/mime.types
+    regexp: '^application/wasm'
+    line: 'application/wasm wasm;'
+    insertbefore: '^}'
+    create: no
   notify: Reload nginx
 
 - name: Configure jicofo
@@ -85,3 +128,13 @@
     src: jicofo.conf
     dest: /etc/jitsi/jicofo/jicofo.conf
   notify: Restart jicofo
+
+- name: Create prosody user for jibri
+  command:
+    cmd: prosodyctl register jibri auth.meet.jitsi {{ jibri_password }}
+    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/jibri.dat
+
+- name: Create prosody user for recorder
+  command:
+    cmd: prosodyctl register recorder recorder.meet.jitsi {{ recorder_password }}
+    creates: /var/lib/prosody/recorder%2emeet%2ejitsi/accounts/recorder.dat

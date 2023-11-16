@@ -4,7 +4,7 @@ dependencies:
 - role: aptiko.general.nginx
   use_ferm: true
 - role: aptiko.general.nginx_site
-  server_name: "{{ jitsi_fqdn }}"
+  server_name: "{{ jibri_fqdn }}"
   letsencrypt: true
   force_ssl: true
-  document_root: /usr/share/jitsi-meet
+  document_root: /var/www/jibri/recordings

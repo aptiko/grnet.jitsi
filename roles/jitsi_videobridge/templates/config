@@ -1,11 +1,11 @@
 # Jitsi Videobridge settings
 
 # sets the XMPP domain (default: none)
-JVB_HOSTNAME={{ hostvars[groups['jitsi_meet'][0]]['ansible_fqdn'] }}
+JVB_HOSTNAME=meet.jitsi
 
 # sets the hostname of the XMPP server (default: domain if set, localhost otherwise)
 # Not needed when not using components (now using MUCs)
-JVB_HOST={{ hostvars[groups['jitsi_meet'][0]]['ansible_fqdn'] }}
+JVB_HOST={{ jitsi_fqdn }}
 
 # sets the shared secret used to authenticate to the XMPP server
 JVB_SECRET={{ videobridge_password }}

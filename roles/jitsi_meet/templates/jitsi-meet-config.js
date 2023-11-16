@@ -1,10 +1,10 @@
 var config = {
     hosts: {
-        domain: '{{ ansible_fqdn }}',
-        muc: 'conference.{{ ansible_fqdn }}',
+        domain: 'meet.jitsi',
+        muc: 'muc.meet.jitsi',
     },
 
-    bosh: '//{{ ansible_fqdn }}/http-bind',
+    bosh: '/http-bind',
 
     testing: {
     },
@@ -29,4 +29,15 @@ var config = {
     },
 
     mouseMoveCallbackInterval: 1000,
+
+    hiddenDomain: 'recorder.meet.jitsi',
+
+    recordingService: {
+        enabled: true,
+        sharingEnabled: false,
+    },
+
+    liveStreaming: {
+        enabled: false,
+    },
 };
