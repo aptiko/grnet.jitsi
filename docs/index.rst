@@ -13,8 +13,7 @@ Installation
 Inventory
 =========
 
-Here is an example inventory for installing both roles on the same
-server::
+Here is an example inventory for installing on a single server::
 
     [jitsi_meet]
     my-jitsi-meet-server
@@ -22,19 +21,14 @@ server::
     [jitsi_videobridge]
     my-jitsi-meet-server
 
-    [jibri]
-    my-jibri-server
-
 The ``jitsi_meet`` group must contain only one server. That server must
 also be listed in the ``jitsi_videobridge`` group ; that is, the Jitsi
 Meet server must also be a videobridge (this is a limitation of the
 Jitsi Debian packages, where ``jitsi-videobridge`` is a dependency of
-``jitsi-meet``). Additional videobridges can be added if desired.
-Finally, the ``jibri`` group can contain one or more servers. The
+``jitsi-meet``). Additional videobridges can be added if desired.  The
 playbook (see below) will assign the ``jitsi_meet`` role to the server
-in the ``jitsi_meet`` group, the ``jitsi_videobridge`` role to the
-servers in the ``jitsi_videobridge`` group, and the ``jibri`` role to
-the servers in the ``jibri`` group. ``jibri`` is optional.
+in the ``jitsi_meet`` group and the ``jitsi_videobridge`` role to the
+servers in the ``jitsi_videobridge`` groupl
 
 Although in principle nginx, jitsi-meet, prosody and jicofo could reside
 in different machines, the role ``jitsi_meet`` puts them all in a single
@@ -45,19 +39,15 @@ Variables
 
 You need to make certain that some variables are available to the
 roles, e.g. by putting them in ``group_vars/all``. Obviously it's a good
-idea to vault the passwords/secrets. Here is an example (the
-jibri/recorder stuff is necessary only when using jibri)::
+idea to vault the passwords/secrets. Here is an example::
 
     jitsi_fqdn: jitsi.example.com
-    jibri_fqdn: jibri.example.com
     jicofo_password: topsecret1
     jicofo_secret: topsecret2
     prosody_external_service_secret: topsecret4
     videobridge_user: myvideobridgeuser
     videobridge_password: topsecret3
     videobridge_muc_nickname: myvideobridge_muc_nick
-    jibri_password: topsecret4
-    recorder_password: topsecret5
 
 Playbook
 ========
@@ -75,11 +65,6 @@ Use a playbook similar to this::
       hosts: jitsi_videobridge
       roles:
         - grnet.jitsi.jitsi_videobridge
-
-    - name: Jibri
-      hosts: jibri
-      roles:
-        - grnet.jitsi.jibri
 
 Jitsi architecture
 ==================
@@ -126,9 +111,7 @@ also proxies ``/http-bind`` and ``/xmpp-websocket`` to prosody's 5280.
 
 **Jibri** is the Jitsi recording component, that records conferences. It
 works by starting a headless chrome browser that joins the conference as
-an invisible user. It is quite heavy, because of the browser and the
-video encoding, and must run on a separate server. Each Jibri server can
-be recording only one conference at any time.
+an invisible user.
 
 For additional information on Jitsi, see:
 
@@ -165,8 +148,60 @@ Variables and options
   role.) Any unique string that is the same for all videobridges will
   work here. Other than that, we don't know exactly what it is for. See
   the `Jitsi multi-user chat documentation`_ for more information.
+- ``jibri_password``, ``recorder_password``: The passwords of the
+  prosody ``jibri`` and ``recorder`` users, which are used by Jibri (see
+  below).
 
 .. _jitsi multi-user chat documentation: https://github.com/jitsi/jitsi-videobridge/blob/master/doc/muc.md
+
+Recording conferences
+=====================
+
+There are two ways to record conferences; at the server and at the
+client. Client recording works at the browser; the user's browser
+records the conference and stores the recording locally at the user. At
+the time of this writing, local recording is marked "Beta" and works
+only on some browsers (e.g. Google Chrome; it doesn't work on Firefox).
+To share the recording, the user must upload it somewhere where the
+users can download it. In addition, there is no warning for the other
+users that the conference is being recorded.
+
+Recording at the server works with a Jitsi component called "Jibri". 
+It runs a headless browser at the server and participates in the
+conference as an invisible person. It is quite heavy, because of the
+video encoding, and therefore should be run on a different server. In
+fact, in this collection this is a requirement. There is also the
+constraint that only a single conference can be recorded at a given time
+by a single Jibri server; to record two simultaneous conferences, two
+Jibri servers are needed (this is a Jibri limitation, not an Ansible
+collection limitation), but currently the Ansible collection supports
+only one.
+
+To enable Jibri, you need to (1) add this to the inventory::
+
+    [jibri]
+    my-jibri-server
+
+(2) Add these variables (obviously the passwords should be vaulted)::
+
+    jibri_fqdn: jibri.example.com
+    jibri_password: topsecret4
+    recorder_password: topsecret5
+
+(3) Add this to the playbook::
+
+    - name: Jibri
+      hosts: jibri
+      roles:
+        - grnet.jitsi.jibri
+
+Jibri doesn't have a ready-made way for users to download conferences.
+We have implemented the simplest possible way for that: We install nginx
+on the Jibri server, and the recordings are at ``https://{{ jibri_fqdn
+}}/{{ room_name }}``. Users must know the room name to get the
+recordings.  A cron job removes recordings after 24 hours. (The fact
+that we have a single ``jibri_fqdn``, a variable only used by nginx, is
+the only reason the role supports only a single jibri.)
 
 Copyright and license
 =====================
