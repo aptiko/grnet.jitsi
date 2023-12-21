@@ -40,6 +40,7 @@
       - lua5.1
       - jitsi-meet
       - prosody-{{ prosody_version }}
+      - sasl2-bin
     autoremove: true
   register: apt_install_result
   ignore_errors: true
@@ -138,3 +139,11 @@
   command:
     cmd: prosodyctl register recorder recorder.meet.jitsi {{ recorder_password }}
     creates: /var/lib/prosody/recorder%2emeet%2ejitsi/accounts/recorder.dat
+
+- name: Configure saslauthd for LDAP
+  template:
+    src: saslauthd.conf
+    dest: /etc/saslauthd.conf
+  when: jitsi_ldap_servers | default(False)
+  notify:
+    - Restart saslauthd

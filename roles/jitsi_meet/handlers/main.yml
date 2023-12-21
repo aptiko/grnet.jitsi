@@ -9,3 +9,8 @@
   service:
     name: prosody
     state: restarted
+
+- name: Restart saslauthd
+  service:
+    name: saslauthd
+    state: restarted

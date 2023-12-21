@@ -151,8 +151,27 @@ Variables and options
 - ``jibri_password``, ``recorder_password``: The passwords of the
   prosody ``jibri`` and ``recorder`` users, which are used by Jibri (see
   below).
+- ``jitsi_ldap_servers``, ``jitsi_ldap_search_base``,
+  ``jitsi_ldap_filter``, ``jitsi_ldap_version``,
+  ``jitsi_ldap_auth_method``: See :ref:`ldap`.
 
 .. _jitsi multi-user chat documentation: https://github.com/jitsi/jitsi-videobridge/blob/master/doc/muc.md
+
+.. _ldap:
+
+External authentication with LDAP
+=================================
+
+By default, the Jitsi server works without authentication. LDAP
+authentication is supported. To enable, set the ``jitsi_ldap_*``
+parameters as needed; for example::
+
+    jitsi_ldap_servers:
+      - myldapserver.example.com
+    jitsi_ldap_search_base: dc=example,dc=com
+    jitsi_ldap_filter: uid=%u
+    jitsi_ldap_version: 3
+    jitsi_ldap_auth_method: bind
 
 Recording conferences
 =====================
