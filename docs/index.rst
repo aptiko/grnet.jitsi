@@ -58,12 +58,15 @@ Use a playbook similar to this::
     - name: Jitsi server
       hosts: jitsi_meet
       roles:
+        - aptiko.general.common
         - aptiko.general.nginx
         - grnet.jitsi.jitsi_meet
 
     - name: Jitsi videobridge
       hosts: jitsi_videobridge
       roles:
+        - aptiko.general.common
+        - aptiko.general.nginx
         - grnet.jitsi.jitsi_videobridge
 
 Jitsi architecture
@@ -151,8 +154,24 @@ Variables and options
 - ``jibri_password``, ``recorder_password``: The passwords of the
   prosody ``jibri`` and ``recorder`` users, which are used by Jibri (see
   below).
+- ``jitsi_ldap_*``: See :ref:`ldap`.
 
 .. _jitsi multi-user chat documentation: https://github.com/jitsi/jitsi-videobridge/blob/master/doc/muc.md
+
+.. _ldap:
+
+External authentication with LDAP
+=================================
+
+By default, the Jitsi server works without authentication. LDAP
+authentication is supported. To enable, set the ``jitsi_ldap_*``
+parameters as needed; for example::
+
+    jitsi_ldap_servers:
+      - ldap://myldapserver.example.com
+    jitsi_ldap_base: dc=example,dc=com
+    jitsi_ldap_filter: uid=$user
+    jitsi_ldap_mode: bind
 
 Recording conferences
 =====================

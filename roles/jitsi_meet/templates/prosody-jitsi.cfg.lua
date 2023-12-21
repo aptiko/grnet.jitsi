@@ -25,8 +25,15 @@ consider_websocket_secure = true;
 VirtualHost "meet.jitsi"
     -- We should probably use "cyrus" instead of jitsi-anonymous, but this doesn't work
     -- with the prosody 0.12 packages.
+    {% if not jitsi_ldap_servers %}
     authentication = "jitsi-anonymous"
-    cyrus_application_name = "xmpp"
+    {% else %}
+    authentication = "ldap"
+    ldap_server = {{ jitsi_ldap_servers|join(" ") }}
+    ldap_base: {{ jitsi_ldap_base }}
+    ldap_filter: {{ jitsi_ldap_filter }}
+    ldap_mode: {{ jitsi_ldap_mode }}
+    {% endif %}
     allow_unencrypted_plain_auth = true
     ssl = {
         key = "/etc/prosody/certs/meet.jitsi.key";
