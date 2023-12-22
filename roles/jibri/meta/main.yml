@@ -1,8 +1,5 @@
 ---
 dependencies:
-- role: aptiko.general.common
-- role: aptiko.general.nginx
-  use_ferm: true
 - role: aptiko.general.nginx_site
   server_name: "{{ jibri_fqdn }}"
   letsencrypt: true

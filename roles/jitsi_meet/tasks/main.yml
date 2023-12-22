@@ -23,24 +23,13 @@
 
 - include_tasks: preconfigure.yml
 
-- name: Set variables for Ubuntu 20.04
-  set_fact:
-    prosody_version: "0.11"
-  when: ansible_distribution_release == "focal"
-
-- name: Set variables for Ubuntu 22.04
-  set_fact:
-    prosody_version: "0.12"
-  when: ansible_distribution_release == "jammy"
-
 - name: Install apt packages required for Jitsi
   apt:
     name:
       - openjdk-8-jre-headless
       - lua5.1
       - jitsi-meet
-      - prosody-{{ prosody_version }}
-      - sasl2-bin
+      - prosody
     autoremove: true
   register: apt_install_result
   ignore_errors: true
@@ -70,6 +59,8 @@
   template:
     src: prosody-jitsi.cfg.lua
     dest: /etc/prosody/conf.avail/jitsi.cfg.lua
+  notify:
+    - Restart prosody
 
 - name: Enable prosody configuration for Jitsi
   file:
@@ -139,11 +130,3 @@
   command:
     cmd: prosodyctl register recorder recorder.meet.jitsi {{ recorder_password }}
     creates: /var/lib/prosody/recorder%2emeet%2ejitsi/accounts/recorder.dat
-
-- name: Configure saslauthd for LDAP
-  template:
-    src: saslauthd.conf
-    dest: /etc/saslauthd.conf
-  when: jitsi_ldap_servers | default(False)
-  notify:
-    - Restart saslauthd
