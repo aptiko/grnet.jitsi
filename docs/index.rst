@@ -170,7 +170,7 @@ parameters as needed; for example::
     jitsi_ldap_servers:
       - ldap://myldapserver.example.com
     jitsi_ldap_base: dc=example,dc=com
-    jitsi_ldap_filter: uid=%u
+    jitsi_ldap_filter: uid=$user
     jitsi_ldap_mode: bind
 
 Recording conferences
