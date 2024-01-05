@@ -43,4 +43,3 @@
     provider: selfsigned
     owner: prosody
     group: prosody
-

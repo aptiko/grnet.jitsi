@@ -3,8 +3,9 @@
   systemd:
     daemon_reexec: yes
 
-- name: Restart jitsi-videobridge2
+- name: Restart jvb
   service:
-    name: jitsi-videobridge2
+    name: jitsi-jvb
     state: restarted
+    daemon-reload: yes
 

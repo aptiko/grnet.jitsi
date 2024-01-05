@@ -9,12 +9,12 @@ unlimited_jids = {
     "jvb@auth.meet.jitsi",
 }
 
-plugin_paths = { "/usr/share/jitsi-meet/prosody-plugins" };
+plugin_paths = { "/opt/jitsi-meet/resources/prosody-plugins" };
 
 muc_mapper_domain_base = "meet.jitsi";
 muc_mapper_domain_prefix = "muc";
 http_default_host = "meet.jitsi";
-external_service_secret = "{{ prosody_external_service_secret }}";
+external_service_secret = "{{ jitsi_prosody_external_service_secret }}";
 external_services = {
      { type = "turn", host = "turn.{{ ansible_host }}", port = 3478, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
      { type = "turns", host = "turn.{{ ansible_host }}", port = 5349, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" }
@@ -29,10 +29,10 @@ VirtualHost "meet.jitsi"
     authentication = "jitsi-anonymous"
     {% else %}
     authentication = "ldap"
-    ldap_server = {{ jitsi_ldap_servers|join(" ") }}
-    ldap_base: {{ jitsi_ldap_base }}
-    ldap_filter: {{ jitsi_ldap_filter }}
-    ldap_mode: {{ jitsi_ldap_mode }}
+    ldap_server = "{{ jitsi_ldap_servers|join(" ") }}"
+    ldap_base = "{{ jitsi_ldap_base }}"
+    ldap_filter = "{{ jitsi_ldap_filter }}"
+    ldap_mode = "{{ jitsi_ldap_mode }}"
     {% endif %}
     allow_unencrypted_plain_auth = true
     ssl = {

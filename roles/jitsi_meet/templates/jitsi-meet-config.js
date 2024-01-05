@@ -1,6 +1,7 @@
 var config = {
     hosts: {
         domain: 'meet.jitsi',
+        anonymousdomain: 'guest.meet.jitsi',
         muc: 'muc.meet.jitsi',
     },
 
