@@ -5,22 +5,6 @@
   delegate_facts: true
   loop: "{{ groups['jitsi_videobridge'] | union(groups['jibri'])}}"
 
-- name: Add Jitsi packaging GPG key
-  apt_key:
-    url: https://download.jitsi.org/jitsi-key.gpg.key
-
-- name: Add Jitsi apt repository
-  apt_repository:
-    repo: deb https://download.jitsi.org stable/
-
-- name: Add Prosody packaging GPG key
-  apt_key:
-    url: https://prosody.im/files/prosody-debian-packages.key
-
-- name: Add Prosody apt repository
-  apt_repository:
-    repo: deb http://packages.prosody.im/debian {{ ansible_distribution_release }} main
-
 - include_tasks: preconfigure.yml
 
 - name: Install apt packages required for Jitsi
@@ -28,72 +12,11 @@
     name:
       - openjdk-8-jre-headless
       - lua5.1
-      - jitsi-meet
       - prosody
     autoremove: true
-  register: apt_install_result
-  ignore_errors: true
-
-# The jitsi debian packages are suboptimal. At least in Ubuntu 20.04, it
-# is common, when installing on a clean machine, for apt to fail, but
-# then running it a second time succeeds, so this is what we do. Other
-# shortcomings are that they need preconfiguring with debconf, otherwise
-# again apt fails, and that videobridge is a necessary dependency of
-# jitsi-meet (when conceivably one might want to keep all videobridges
-# on separate machines). It would be best to refrain from using debian
-# packages and install from source instead, but we aren't ready for that
-# yet.
-
-- name: Try a second time if there was an error installing apt packages
-  command: "apt-get -f -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install"
-  when: apt_install_result.failed
-
-- name: Remove automatically created prosody configuration file
-  file:
-    dest: /etc/prosody/conf.d/{{ ansible_fqdn }}.cfg.lua
-    state: absent
 
 - include_tasks: create_certificates.yml
-
-- name: Add prosody configuration for Jitsi
-  template:
-    src: prosody-jitsi.cfg.lua
-    dest: /etc/prosody/conf.avail/jitsi.cfg.lua
-  notify:
-    - Restart prosody
-
-- name: Enable prosody configuration for Jitsi
-  file:
-    state: link
-    src: /etc/prosody/conf.avail/jitsi.cfg.lua
-    dest: /etc/prosody/conf.d/jitsi.cfg.lua
-  notify:
-    - Restart prosody
-
-# This should have been created by the debconf preconfiguration, but the
-# latter actually creates focus@auth.[ansible_fqdn], whereas we want
-# focus@auth.meet.jitsi.
-- name: Create prosody user for Jicofo
-  command:
-    cmd: prosodyctl register focus auth.meet.jitsi {{ jicofo_password }}
-    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/focus.dat
-
-- name: Subscribe focus.meet.jitsi to prosody
-  command:
-    cmd: prosodyctl mod_roster_command subscribe focus.meet.jitsi focus@auth.meet.jitsi
-    creates: /var/lib/prosody/auth%2emeet%2ejitsi/roster/focus.dat
-
-- name: Create prosody user for the videobridges
-  command:
-    cmd: prosodyctl register {{ videobridge_user }} auth.meet.jitsi {{ videobridge_password }}
-    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/{{ videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
-
-- name: Allow videobridges and jibri to access prosody through firewall
-  lineinfile:
-    path: /etc/ferm/ansible-late
-    line: "proto tcp saddr {{ hostvars[item]['ansible_default_ipv4']['address'] }} dport 5222 ACCEPT;"
-  notify: Reload ferm
-  loop: "{{ groups['jitsi_videobridge'] | union(groups['jibri']) }}"
+- include_tasks: prosody.yml
 
 - name: Configure jitsi-meet
   template:
@@ -120,13 +43,3 @@
     src: jicofo.conf
     dest: /etc/jitsi/jicofo/jicofo.conf
   notify: Restart jicofo
-
-- name: Create prosody user for jibri
-  command:
-    cmd: prosodyctl register jibri auth.meet.jitsi {{ jibri_password }}
-    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/jibri.dat
-
-- name: Create prosody user for recorder
-  command:
-    cmd: prosodyctl register recorder recorder.meet.jitsi {{ recorder_password }}
-    creates: /var/lib/prosody/recorder%2emeet%2ejitsi/accounts/recorder.dat

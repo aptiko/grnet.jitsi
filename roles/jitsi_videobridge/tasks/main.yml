@@ -4,14 +4,6 @@
   delegate_to: "{{ groups['jitsi_meet'][0] }}"
   delegate_facts: true
 
-- name: Add Jitsi packaging GPG key
-  apt_key:
-    url: https://download.jitsi.org/jitsi-key.gpg.key
-
-- name: Add Jitsi apt repository
-  apt_repository:
-    repo: deb https://download.jitsi.org stable/
-
 - name: Increase TaskMax
   lineinfile:
     path: /etc/systemd/system.conf
@@ -36,22 +28,37 @@
   notify:
     - Reload systemd
 
-# On additional Videobridge installations, 
-# the hostname here is that of the main one
-- name: Preconfigure Videobridge
-  debconf:
-    name: jitsi-videobridge
-    question: jitsi-videobridge/jvb-hostname
-    vtype: string
-    value: "{{ hostvars[groups['jitsi_meet'][0]]['ansible_fqdn'] }}"
-
 - name: Install apt packages required for Videobridge
   apt:
     name:
      - openjdk-8-jre-headless
      - jitsi-videobridge2
+     - git
+     - maven
 
-- name: Configure videobridge part I
+- name: Clone jvb repository
+  git:
+    repo: https://github.com/jitsi/jitsi-videobridge.git
+    dest: /opt/jvb
+    version: stable/jitsi-meet_{{ jitsi_release_number }}
+
+- name: Get jvb version number
+  command: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+  args:
+    chdir: /opt/jvb
+  register: mvn_output
+  changed_when: false
+  check_mode: no
+
+- name: Build jvb
+  command: mvn install
+  args:
+    chdir: /opt/jvb
+    creates: /opt/jvb/jvb/target/jitsi-videobridge-{{ mvn_output.stdout }}-archive.zip
+
+# Continue from here, following instructions from https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-manual#install-jitsi-videobridge
+
+- name: Setup sip-communicator.properties
   template:
     src: videobridge_sip-communicator.properties
     dest: /etc/jitsi/videobridge/sip-communicator.properties
@@ -63,7 +70,7 @@
   notify:
     - Restart jitsi-videobridge2
 
-- name: Configure videobridge part II
+- name: Setup jvb config files
   template:
     src: "{{ item }}"
     dest: /etc/jitsi/videobridge/{{ item }}
@@ -73,6 +80,7 @@
   with_items:
     - config
     - jvb.conf
+    - logging.properties
   tags:
     - jvbconf
   notify:
