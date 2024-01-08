@@ -1,0 +1,8 @@
+[Unit]
+Description=Jitsi Jicofo
+
+[Service]
+ExecStart=/opt/jicofo/{{ get_jicofo_release_number }}/jicofo.sh --domain={{ jitsi_fqdn }} --secret={{ jicofo_secret }}
+
+[Install]
+WantedBy=multi-user.target

@@ -35,17 +35,18 @@
      - jitsi-videobridge2
      - git
      - maven
+     - unzip
 
 - name: Clone jvb repository
   git:
     repo: https://github.com/jitsi/jitsi-videobridge.git
-    dest: /opt/jvb
+    dest: /opt/src/jvb
     version: stable/jitsi-meet_{{ jitsi_release_number }}
 
-- name: Get jvb version number
+- name: Get jvb build number
   command: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
   args:
-    chdir: /opt/jvb
+    chdir: /opt/src/jvb
   register: mvn_output
   changed_when: false
   check_mode: no
@@ -53,10 +54,20 @@
 - name: Build jvb
   command: mvn install
   args:
-    chdir: /opt/jvb
-    creates: /opt/jvb/jvb/target/jitsi-videobridge-{{ mvn_output.stdout }}-archive.zip
+    chdir: /opt/src/jvb
+    creates: /opt/src/jvb/jvb/target/jitsi-videobridge-{{ mvn_output.stdout }}-archive.zip
 
-# Continue from here, following instructions from https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-manual#install-jitsi-videobridge
+- name: Unzip built jvb
+  unarchive:
+    src: /opt/src/jvb/jvb/target/jitsi-videobridge-{{ mvn_output.stdout }}-archive.zip
+    dest: /opt/jvb
+    remote_src: yes
+    creates: /opt/jvb/jitsi-videobridge-{{ mvn_output.stdout }}
+
+- name: Create jvb service
+  template:
+    src: jitsi-jvb.service
+    dest: /etc/systemd/system/jitsi-jvb.service
 
 - name: Setup sip-communicator.properties
   template:

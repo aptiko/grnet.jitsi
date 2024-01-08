@@ -9,3 +9,8 @@
   service:
     name: prosody
     state: restarted
+
+- name: Install jitsi-meet
+  shell:
+    cmd: npm install && make
+    chdir: /opt/jitsi-meet
