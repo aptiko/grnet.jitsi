@@ -63,11 +63,17 @@
     dest: /opt/jvb
     remote_src: yes
     creates: /opt/jvb/jitsi-videobridge-{{ mvn_output.stdout }}
+  notify: Restart jvb
 
 - name: Create jvb service
   template:
     src: jitsi-jvb.service
     dest: /etc/systemd/system/jitsi-jvb.service
+
+- name: Enable jvb service
+  service:
+    name: jitsi-jvb
+    enabled: yes
 
 - name: Setup sip-communicator.properties
   template:
@@ -79,7 +85,7 @@
   tags:
     - jvbconf
   notify:
-    - Restart jitsi-videobridge2
+    - Restart jvb
 
 - name: Setup jvb config files
   template:
@@ -95,7 +101,7 @@
   tags:
     - jvbconf
   notify:
-    - Restart jitsi-videobridge2
+    - Restart jvb
 
 - name: Allow nginx to proxy http requests
   lineinfile:
