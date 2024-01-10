@@ -29,10 +29,10 @@ VirtualHost "meet.jitsi"
     authentication = "jitsi-anonymous"
     {% else %}
     authentication = "ldap"
-    ldap_server = {{ jitsi_ldap_servers|join(" ") }}
-    ldap_base: {{ jitsi_ldap_base }}
-    ldap_filter: {{ jitsi_ldap_filter }}
-    ldap_mode: {{ jitsi_ldap_mode }}
+    ldap_server = "{{ jitsi_ldap_servers|join(" ") }}"
+    ldap_base = "{{ jitsi_ldap_base }}"
+    ldap_filter = "{{ jitsi_ldap_filter }}"
+    ldap_mode = "{{ jitsi_ldap_mode }}"
     {% endif %}
     allow_unencrypted_plain_auth = true
     ssl = {

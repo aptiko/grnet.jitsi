@@ -2,7 +2,7 @@
 Description=Jitsi Video Bridge
 
 [Service]
-ExecStart=/opt/jvb/{{ mvn_output.stdout }}/jvb.sh --host=localhost --domain={{ jitsi_fqdn }} --secret={{ videobridge_secret }}
+ExecStart=/opt/jvb/{{ jvb_build_number}}/jvb.sh --host=localhost --domain={{ jitsi_fqdn }} --secret={{ videobridge_secret }}
 
 [Install]
 WantedBy=multi-user.target

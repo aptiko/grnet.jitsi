@@ -1,8 +1,8 @@
 ---
 
-- name: Restart jicofo
+- name: Restart Jicofo
   service:
-    name: jicofo
+    name: jitsi-jicofo
     state: restarted
 
 - name: Restart prosody
