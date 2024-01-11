@@ -13,7 +13,6 @@
       - prosody
       - git
       - maven
-      - npm
       - make
       - unzip
     autoremove: true
@@ -24,7 +23,7 @@
 - name: Clone jitsi-meet
   git:
     repo: https://github.com/jitsi/jitsi-meet.git
-    dest: /opt/src/jitsi-meet
+    dest: /opt/jitsi-meet
     version: stable/jitsi-meet_{{ jitsi_release_number }}
   notify:
    - Install jitsi-meet
