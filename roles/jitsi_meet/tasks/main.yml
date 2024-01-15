@@ -95,6 +95,7 @@
     dest: /etc/systemd/system/jitsi-jicofo.service
   vars:
     jicofo_build_number: "{{ get_jicofo_build_number.stdout }}"
+  notify: Restart Jicofo
 
 - name: Enable Jicofo service
   service:

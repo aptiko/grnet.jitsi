@@ -5,7 +5,7 @@ dependencies:
   server_name: "{{ jitsi_fqdn }}"
   letsencrypt: true
   force_ssl: true
-  document_root: /usr/share/jitsi-meet
+  document_root: /opt/jitsi-meet
 
 - role: aptiko.general.node
   node_version: 20

@@ -4,6 +4,7 @@
   service:
     name: jitsi-jicofo
     state: restarted
+    daemon-reload: yes
 
 - name: Restart prosody
   service:
