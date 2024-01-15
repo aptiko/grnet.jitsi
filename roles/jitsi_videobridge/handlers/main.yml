@@ -7,4 +7,5 @@
   service:
     name: jitsi-jvb
     state: restarted
+    daemon-reload: yes
 

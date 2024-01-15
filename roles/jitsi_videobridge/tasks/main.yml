@@ -78,6 +78,7 @@
     dest: /etc/systemd/system/jitsi-jvb.service
   vars:
     jvb_build_number: "{{ get_jvb_build_number.stdout }}"
+  notify: Restart jvb
 
 - name: Enable jvb service
   service:
