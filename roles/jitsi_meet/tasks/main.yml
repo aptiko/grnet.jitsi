@@ -107,3 +107,9 @@
     src: jicofo.conf
     dest: /etc/jitsi/jicofo/jicofo.conf
   notify: Restart Jicofo
+
+- name: Configure Jicofo logging properties
+  template:
+    src: jicofo-logging.properties
+    dest: /etc/jitsi/jicofo/logging.properties
+  notify: Restart Jicofo

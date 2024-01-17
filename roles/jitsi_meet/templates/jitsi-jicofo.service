@@ -2,7 +2,7 @@
 Description=Jitsi Jicofo
 
 [Service]
-Environment="JAVA_SYS_PROPS=-Dconfig.file=/etc/jitsi/jicofo/jicofo.conf"
+Environment="JAVA_SYS_PROPS=-Dconfig.file=/etc/jitsi/jicofo/jicofo.conf -Djava.util.logging.config.file=/etc/jitsi/jicofo/logging.properties"
 ExecStart=/opt/jicofo/jicofo-{{ jicofo_build_number }}/jicofo.sh --domain={{ jitsi_fqdn }} --secret={{ jicofo_secret }}
 
 [Install]
