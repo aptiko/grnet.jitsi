@@ -7,16 +7,16 @@
     group: prosody
 
 - name: Create certificate signing request for meet.jitsi
-  community.crypto.openssl_csr_pipe:
+  community.crypto.openssl_csr:
+    path: /etc/prosody/certs/meet.jitsi.csr
     privatekey_path: /etc/prosody/certs/meet.jitsi.key
     common_name: meet.jitsi
     organization_name: Jitsi
-  register: csr_meet_jitsi
 
 - name: Generate certificate for meet.jitsi
   community.crypto.x509_certificate:
     path: /etc/prosody/certs/meet.jitsi.crt
-    csr_content: "{{ csr_meet_jitsi.csr }}"
+    csr_path: /etc/prosody/certs/meet.jitsi.csr
     privatekey_path: /etc/prosody/certs/meet.jitsi.key
     provider: selfsigned
     owner: prosody
@@ -29,16 +29,16 @@
     group: prosody
 
 - name: Create certificate signing request for auth.meet.jitsi
-  community.crypto.openssl_csr_pipe:
+  community.crypto.openssl_csr:
+    path: /etc/prosody/certs/auth.meet.jitsi.csr
     privatekey_path: /etc/prosody/certs/auth.meet.jitsi.key
     common_name: auth.meet.jitsi
     organization_name: Jitsi
-  register: csr_auth_meet_jitsi
 
 - name: Generate certificate for auth.meet.jitsi
   community.crypto.x509_certificate:
     path: /etc/prosody/certs/auth.meet.jitsi.crt
-    csr_content: "{{ csr_auth_meet_jitsi.csr }}"
+    csr_path: /etc/prosody/certs/auth.meet.jitsi.csr
     privatekey_path: /etc/prosody/certs/auth.meet.jitsi.key
     provider: selfsigned
     owner: prosody
