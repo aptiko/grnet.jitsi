@@ -1,12 +1,4 @@
 ---
-## And this by /usr/share/jitsi-meet/scripts/install-letsencrypt-cert.sh
-- name: Preconfigure Jitsi Meet
-  debconf:
-    name: jitsi-meet
-    question: jitsi-meet/jvb-hostname
-    vtype: string
-    value: "{{ ansible_fqdn }}"
-
 ## Used by jitsi-meet-turnserver
 - name: Set up turn server secret
   debconf:

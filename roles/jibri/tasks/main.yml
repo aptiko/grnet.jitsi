@@ -97,7 +97,7 @@
 - name: Configure nginx
   copy:
     src: nginx.conf
-    dest: /etc/nginx/snippets/{{ jibri_fqdn }}/jibri.conf
+    dest: /etc/nginx/snippets/{{ jitsi_jibri_fqdn }}/jibri.conf
   notify:
     - Reload nginx
 

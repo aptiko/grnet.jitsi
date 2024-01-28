@@ -8,7 +8,7 @@ JVB_HOSTNAME=meet.jitsi
 JVB_HOST={{ jitsi_fqdn }}
 
 # sets the shared secret used to authenticate to the XMPP server
-JVB_SECRET={{ videobridge_password }}
+JVB_SECRET={{ jitsi_videobridge_password }}
 
 # extra options to pass to the JVB daemon
 JVB_OPTS="--apis=,"

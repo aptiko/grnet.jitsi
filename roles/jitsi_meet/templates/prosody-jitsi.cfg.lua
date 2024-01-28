@@ -14,7 +14,7 @@ plugin_paths = { "/opt/jitsi-meet/resources/prosody-plugins" };
 muc_mapper_domain_base = "meet.jitsi";
 muc_mapper_domain_prefix = "muc";
 http_default_host = "meet.jitsi";
-external_service_secret = "{{ prosody_external_service_secret }}";
+external_service_secret = "{{ jitsi_prosody_external_service_secret }}";
 external_services = {
      { type = "turn", host = "turn.{{ ansible_host }}", port = 3478, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
      { type = "turns", host = "turn.{{ ansible_host }}", port = 5349, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" }

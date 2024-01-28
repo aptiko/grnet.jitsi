@@ -22,7 +22,7 @@
 
 - name: Create prosody user for Jicofo
   command:
-    cmd: prosodyctl register focus auth.meet.jitsi {{ jicofo_password }}
+    cmd: prosodyctl register focus auth.meet.jitsi {{ jitsi_jicofo_password }}
     creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/focus.dat
 
 - name: Subscribe focus.meet.jitsi to prosody
@@ -33,8 +33,8 @@
 
 - name: Create prosody user for the videobridges
   command:
-    cmd: prosodyctl register {{ videobridge_user }} auth.meet.jitsi {{ videobridge_password }}
-    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/{{ videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
+    cmd: prosodyctl register {{ jitsi_videobridge_user }} auth.meet.jitsi {{ jitsi_videobridge_password }}
+    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/{{ jitsi_videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
 
 - name: Allow videobridges and jibri to access prosody through firewall
   lineinfile:
@@ -45,10 +45,10 @@
 
 - name: Create prosody user for jibri
   command:
-    cmd: prosodyctl register jibri auth.meet.jitsi {{ jibri_password }}
+    cmd: prosodyctl register jibri auth.meet.jitsi {{ jitsi_jibri_password }}
     creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/jibri.dat
 
 - name: Create prosody user for recorder
   command:
-    cmd: prosodyctl register recorder recorder.meet.jitsi {{ recorder_password }}
+    cmd: prosodyctl register recorder recorder.meet.jitsi {{ jitsi_recorder_password }}
     creates: /var/lib/prosody/recorder%2emeet%2ejitsi/accounts/recorder.dat

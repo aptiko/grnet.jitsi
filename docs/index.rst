@@ -34,20 +34,19 @@ Although in principle nginx, jitsi-meet, prosody and jicofo could reside
 in different machines, the role ``jitsi_meet`` puts them all in a single
 server.
 
-Variables
-=========
+Variables example
+=================
 
 You need to make certain that some variables are available to the
 roles, e.g. by putting them in ``group_vars/all``. Obviously it's a good
 idea to vault the passwords/secrets. Here is an example::
 
     jitsi_fqdn: jitsi.example.com
-    jicofo_password: topsecret1
-    jicofo_secret: topsecret2
-    prosody_external_service_secret: topsecret4
-    videobridge_user: myvideobridgeuser
-    videobridge_password: topsecret3
-    videobridge_muc_nickname: myvideobridge_muc_nick
+    jitsi_jicofo_password: topsecret1
+    jitsi_jicofo_secret: topsecret2
+    jitsi_videobridge_user: myvideobridgeuser
+    jitsi_videobridge_password: topsecret3
+    jitsi_videobridge_muc_nickname: myvideobridge_muc_nick
 
 Playbook
 ========
@@ -136,24 +135,25 @@ Variables and options
 =====================
 
 - ``jitsi_fqdn``: The domain where jitsi meet is listening.
-- ``jibri_fqdn``: The domain name of the jibri server (used for
+- ``jitsi_jibri_fqdn``: The domain name of the jibri server (used for
   downloading recordings).
-- ``jicofo_password``, ``jicofo_secret``: The Jicofo username is set as
-  "focus", and the password is set to the value of ``jicofo_password``.
-  It's not actually used anywhere (but has to be set). Likewise with the
-  ``jicofo_secret``.
-- ``videobridge_user``, ``videobridge_password``: Username and password for
-  the videobridge. The user is registered in prosody, and subsequently
-  the videobridges connect to prosody as this user. The user is also
-  apparently used for SIP, but this is currently not supported by this
-  role.
-- ``videobridge_muc_nickname``: (Used only by the ``jitsi-videobridge``
-  role.) Any unique string that is the same for all videobridges will
-  work here. Other than that, we don't know exactly what it is for. See
-  the `Jitsi multi-user chat documentation`_ for more information.
-- ``jibri_password``, ``recorder_password``: The passwords of the
-  prosody ``jibri`` and ``recorder`` users, which are used by Jibri (see
-  below).
+- ``jitsi_jicofo_password``, ``jitsi_jicofo_secret``: The Jicofo
+  username is set as "focus", and the password is set to the value of
+  ``jitsi_jicofo_password``.  It's not actually used anywhere (but has
+  to be set). Likewise with the ``jitsi_jicofo_secret``.
+- ``jitsi_videobridge_user``, ``jitsi_videobridge_password``: Username
+  and password for the videobridge. The user is registered in prosody,
+  and subsequently the videobridges connect to prosody as this user. The
+  user is also apparently used for SIP, but this is currently not
+  supported by this role.
+- ``jitsi_videobridge_muc_nickname``: (Used only by the
+  ``jitsi_videobridge`` role.) Any unique string that is the same for
+  all videobridges will work here. Other than that, we don't know
+  exactly what it is for. See the `Jitsi multi-user chat documentation`_
+  for more information.
+- ``jitsi_jibri_password``, ``jitsi_recorder_password``: The passwords
+  of the prosody ``jibri`` and ``recorder`` users, which are used by
+  Jibri (see below).
 - ``jitsi_ldap_*``: See :ref:`ldap`.
 
 .. _jitsi multi-user chat documentation: https://github.com/jitsi/jitsi-videobridge/blob/master/doc/muc.md
@@ -203,9 +203,9 @@ To enable Jibri, you need to (1) add this to the inventory::
 
 (2) Add these variables (obviously the passwords should be vaulted)::
 
-    jibri_fqdn: jibri.example.com
-    jibri_password: topsecret4
-    recorder_password: topsecret5
+    jitsi_jibri_fqdn: jibri.example.com
+    jitsi_jibri_password: topsecret4
+    jitsi_recorder_password: topsecret5
 
 (3) Add this to the playbook::
 
@@ -216,17 +216,17 @@ To enable Jibri, you need to (1) add this to the inventory::
 
 Jibri doesn't have a ready-made way for users to download conferences.
 We have implemented the simplest possible way for that: We install nginx
-on the Jibri server, and the recordings are at ``https://{{ jibri_fqdn
-}}/{{ room_name }}``. Users must know the room name to get the
-recordings.  A cron job removes recordings after 24 hours. (The fact
-that we have a single ``jibri_fqdn``, a variable only used by nginx, is
-the only reason the role supports only a single jibri.)
+on the Jibri server, and the recordings are at ``https://{{
+jitsi_jibri_fqdn }}/{{ room_name }}``. Users must know the room name to
+get the recordings.  A cron job removes recordings after 24 hours. (The
+fact that we have a single ``jitsi_jibri_fqdn``, a variable only used by
+nginx, is the only reason the role supports only a single jibri.)
 
 Copyright and license
 =====================
 
 Written by Antonis Christofides. The ``jitsi_meet`` and
-``jitsi-videobridge`` roles were originally based on the
+``jitsi_videobridge`` roles were originally based on the
 ``ansible-jitsi-meet`` role from
 https://github.com/udima-university/ansible-jitsi-meet (though they now
 contain very little from there).
