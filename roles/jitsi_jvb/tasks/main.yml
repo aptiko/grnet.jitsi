@@ -115,7 +115,7 @@
     line: "proto (tcp udp) saddr {{ hostvars[groups['jitsi_meet'][0]]['ansible_default_ipv4']['address'] }} dport 9090 ACCEPT;"
   notify: Reload ferm
 
-- name: Allow videobridge through firewall
+- name: Allow jvb through firewall
   lineinfile:
     path: /etc/ferm/ansible-late
     line: "proto udp dport 10000 ACCEPT;"

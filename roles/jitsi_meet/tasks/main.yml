@@ -1,9 +1,9 @@
 ---
-- name: Gather videobridge and jibri facts
+- name: Gather jvb and jibri facts
   setup:
   delegate_to: "{{ item }}"
   delegate_facts: true
-  loop: "{{ groups['jitsi_videobridge'] | union(groups['jibri'])}}"
+  loop: "{{ groups['jitsi_jvb'] | union(groups['jibri'])}}"
 
 - name: Install apt packages required for Jitsi
   apt:

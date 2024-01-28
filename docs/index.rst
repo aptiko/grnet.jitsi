@@ -18,17 +18,16 @@ Here is an example inventory for installing on a single server::
     [jitsi_meet]
     my-jitsi-meet-server
 
-    [jitsi_videobridge]
+    [jitsi_jvb]
     my-jitsi-meet-server
 
 The ``jitsi_meet`` group must contain only one server. That server must
-also be listed in the ``jitsi_videobridge`` group ; that is, the Jitsi
-Meet server must also be a videobridge (this is a limitation of the
-Jitsi Debian packages, where ``jitsi-videobridge`` is a dependency of
-``jitsi-meet``). Additional videobridges can be added if desired.  The
-playbook (see below) will assign the ``jitsi_meet`` role to the server
-in the ``jitsi_meet`` group and the ``jitsi_videobridge`` role to the
-servers in the ``jitsi_videobridge`` groupl
+also be listed in the ``jitsi_jvb`` group ; that is, the Jitsi Meet
+server must also be a videobridge (this is an old limitation and it
+shouldn't be difficult to fix, assuming it's still there).  Additional
+videobridges can be added if desired.  The playbook (see below) will
+assign the ``jitsi_meet`` role to the server in the ``jitsi_meet`` group
+and the ``jitsi_jvb`` role to the servers in the ``jitsi_jvb`` groupl
 
 Although in principle nginx, jitsi-meet, prosody and jicofo could reside
 in different machines, the role ``jitsi_meet`` puts them all in a single
@@ -44,9 +43,10 @@ idea to vault the passwords/secrets. Here is an example::
     jitsi_fqdn: jitsi.example.com
     jitsi_jicofo_password: topsecret1
     jitsi_jicofo_secret: topsecret2
-    jitsi_videobridge_user: myvideobridgeuser
-    jitsi_videobridge_password: topsecret3
-    jitsi_videobridge_muc_nickname: myvideobridge_muc_nick
+    jitsi_jvb_user: myvideobridgeuser
+    jitsi_jvb_password: topsecret3
+    jitsi_jvb_muc_nickname: myvideobridge_muc_nick
+    jitsi_prosody_external_service_secret: topsecret4
 
 Playbook
 ========
@@ -62,11 +62,11 @@ Use a playbook similar to this::
         - grnet.jitsi.jitsi_meet
 
     - name: Jitsi videobridge
-      hosts: jitsi_videobridge
+      hosts: jitsi_jvb
       roles:
         - aptiko.general.common
         - aptiko.general.nginx
-        - grnet.jitsi.jitsi_videobridge
+        - grnet.jitsi.jitsi_jvb
 
 Jitsi architecture
 ==================
@@ -141,13 +141,13 @@ Variables and options
   username is set as "focus", and the password is set to the value of
   ``jitsi_jicofo_password``.  It's not actually used anywhere (but has
   to be set). Likewise with the ``jitsi_jicofo_secret``.
-- ``jitsi_videobridge_user``, ``jitsi_videobridge_password``: Username
+- ``jitsi_jvb_user``, ``jitsi_jvb_password``: Username
   and password for the videobridge. The user is registered in prosody,
   and subsequently the videobridges connect to prosody as this user. The
   user is also apparently used for SIP, but this is currently not
   supported by this role.
-- ``jitsi_videobridge_muc_nickname``: (Used only by the
-  ``jitsi_videobridge`` role.) Any unique string that is the same for
+- ``jitsi_jvb_muc_nickname``: (Used only by the
+  ``jitsi_jvb`` role.) Any unique string that is the same for
   all videobridges will work here. Other than that, we don't know
   exactly what it is for. See the `Jitsi multi-user chat documentation`_
   for more information.
@@ -155,6 +155,8 @@ Variables and options
   of the prosody ``jibri`` and ``recorder`` users, which are used by
   Jibri (see below).
 - ``jitsi_ldap_*``: See :ref:`ldap`.
+- ``jitsi_prosody_external_service_secret``: The secret for external
+  services (e.g. for TURN).
 
 .. _jitsi multi-user chat documentation: https://github.com/jitsi/jitsi-videobridge/blob/master/doc/muc.md
 
@@ -226,7 +228,7 @@ Copyright and license
 =====================
 
 Written by Antonis Christofides. The ``jitsi_meet`` and
-``jitsi_videobridge`` roles were originally based on the
+``jitsi_jvb`` roles were originally based on the
 ``ansible-jitsi-meet`` role from
 https://github.com/udima-university/ansible-jitsi-meet (though they now
 contain very little from there).

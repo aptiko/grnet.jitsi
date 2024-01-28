@@ -2,9 +2,9 @@
 - name: Jitsi server
   hosts: jitsi_meet
   roles:
-    - jitsi-meet
+    - jitsi_meet
 
 - name: Jitsi videobridge
-  hosts: jitsi_videobridge
+  hosts: jitsi_jvb
   roles:
-    - role: jitsi-videobridge
+    - role: jitsi_jvb

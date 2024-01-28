@@ -33,15 +33,15 @@
 
 - name: Create prosody user for the videobridges
   command:
-    cmd: prosodyctl register {{ jitsi_videobridge_user }} auth.meet.jitsi {{ jitsi_videobridge_password }}
-    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/{{ jitsi_videobridge_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
+    cmd: prosodyctl register {{ jitsi_jvb_user }} auth.meet.jitsi {{ jitsi_jvb_password }}
+    creates: /var/lib/prosody/auth%2emeet%2ejitsi/accounts/{{ jitsi_jvb_user | replace(".","%2e") | replace("-","%2d") | replace("_","%5f") }}.dat
 
 - name: Allow videobridges and jibri to access prosody through firewall
   lineinfile:
     path: /etc/ferm/ansible-late
     line: "proto tcp saddr {{ hostvars[item]['ansible_default_ipv4']['address'] }} dport 5222 ACCEPT;"
   notify: Reload ferm
-  loop: "{{ groups['jitsi_videobridge'] | union(groups['jibri']) }}"
+  loop: "{{ groups['jitsi_jvb'] | union(groups['jibri']) }}"
 
 - name: Create prosody user for jibri
   command:
