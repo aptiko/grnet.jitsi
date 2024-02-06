@@ -71,6 +71,7 @@
   user:
     name: jibri
     group: jibri
+    groups: audio
 
 - name: Clone Jibri
   git:
@@ -83,6 +84,34 @@
   args:
     chdir: /opt/jibri
     creates: /opt/jibri/target/jibri-8.0-SNAPSHOT-jar-with-dependencies.jar
+
+- name: Create Xorg service
+  template:
+    src: jitsi-jibri-xorg.service
+    dest: /etc/systemd/system/jitsi-jibri-xorg.service
+
+- name: Configure Xorg service
+  template:
+    src: xorg-video-dummy.conf
+    dest: /etc/jitsi/jibri/xorg-video-dummy.conf
+  notify: Restart Xorg service
+
+- name: Enable Xorg service
+  service:
+    name: jitsi-jibri-xorg
+    enabled: yes
+    state: started
+
+- name: Create Icewm service
+  template:
+    src: jitsi-jibri-icewm.service
+    dest: /etc/systemd/system/jitsi-jibri-icewm.service
+
+- name: Enable Icewm service
+  service:
+    name: jitsi-jibri-icewm
+    enabled: yes
+    state: started
 
 - name: Create Jibri service
   template:
@@ -99,6 +128,12 @@
   file:
     dest: /etc/jitsi/jibri
     state: directory
+
+- name: Copy asoundrc
+  copy:
+    src: asoundrc
+    dest: /home/jibri/.asoundrc
+  notify: Restart Jibri
 
 - name: Configure Jibri
   template:
