@@ -1,5 +1,6 @@
 ---
 - name: Restart Jibri
   service:
-    name: jibri
+    name: jitsi-jibri
+    daemon-reload: true
     state: restarted
